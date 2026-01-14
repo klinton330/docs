@@ -1,172 +1,204 @@
-What is Garbage Collection in Java?
 
-Garbage Collection (GC) is Java’s automatic memory management process.
+## What is Garbage Collection in Java?
+
+**Garbage Collection (GC)** is Java’s automatic memory management process.
 
 👉 Its job is to:
 
-Find objects in heap memory that are no longer used
+-   Find objects in **heap memory** that are **no longer used**
+    
+-   **Free that memory** automatically
+    
 
-Free that memory automatically
+So you **don’t manually free memory** like in C/C++. JVM handles it for you.
 
-So you don’t manually free memory like in C/C++. JVM handles it for you.
-
-Simple example
+### Simple example
+```java
 Person p = new Person();  // object created
 p = null;                 // object eligible for GC
+```
 
+## How does Garbage Collector decide?
 
-Once there are no references to the object, it becomes eligible for garbage collection.
+GC checks **reachability**:
 
-⚠️ Important:
-GC decides when to run — you can’t force it.
+-   If an object is reachable from **GC Roots**, it stays
+    
+-   Otherwise, it’s garbage
+    
 
-How does Garbage Collector decide?
+### GC Roots include:
 
-GC checks reachability:
+-   Local variables (method stack)
+    
+-   Static variables
+    
+-   Active threads
+    
+-   JNI references
+ 
+----------
 
-If an object is reachable from GC Roots, it stays
-
-Otherwise, it’s garbage
-
-GC Roots include:
-
-Local variables (method stack)
-
-Static variables
-
-Active threads
-
-JNI references
-
-Types of Garbage Collectors in Java
+## Types of Garbage Collectors in Java
 
 Different GC algorithms exist for different use cases (low latency, high throughput, etc.).
+### 1. Serial Garbage Collector
 
-1. Serial Garbage Collector
+**Best for:** Small applications, single CPU
 
-Best for: Small applications, single CPU
+-   Uses **single thread**
+    
+-   **Stops the world** during GC
+    
+-   Simple and low overhead
+    
+Enable:
 
-Uses single thread
+`-XX:+UseSerialGC` 
 
-Stops the world during GC
+----------
 
-Simple and low overhead
+### 2. Parallel Garbage Collector (Throughput GC)
 
-📌 Enable:
+**Best for:** High-throughput apps
 
--XX:+UseSerialGC
+-   Uses **multiple threads**
+    
+-   Faster GC than Serial
+    
+-   Still **stop-the-world**
+    
+Default GC in Java 8
 
-2. Parallel Garbage Collector (Throughput GC)
+`-XX:+UseParallelGC` 
 
-Best for: High-throughput apps
+----------
 
-Uses multiple threads
+### 3. CMS (Concurrent Mark Sweep) – ⚠ Deprecated
 
-Faster GC than Serial
+**Best for:** Low-latency apps (older JVMs)
 
-Still stop-the-world
+-   Runs GC **concurrently** with application
+    
+-   Reduces pause times
+    
+-   Causes **fragmentation**
+    
+Deprecated since Java 9
 
-📌 Default GC in Java 8
+----------
 
--XX:+UseParallelGC
+### 4. G1 Garbage Collector (Most Popular Now)
 
-3. CMS (Concurrent Mark Sweep) – ⚠ Deprecated
+**Best for:** Large heap, low latency + good throughput
 
-Best for: Low-latency apps (older JVMs)
+-   Heap divided into **regions**
+    
+-   Collects garbage **incrementally**
+    
+-   Predictable pause times
+    
+Default GC from Java 9+
 
-Runs GC concurrently with application
+`-XX:+UseG1GC` 
 
-Reduces pause times
+----------
 
-Causes fragmentation
+### 5. ZGC (Ultra-Low Latency)
 
-📌 Deprecated since Java 9
+**Best for:** Huge heaps, real-time systems
 
-4. G1 Garbage Collector (Most Popular Now)
+-   Pause times in **milliseconds**
+    
+-   Almost fully concurrent
+    
+-   Very scalable
+    
+ Java 11+
 
-Best for: Large heap, low latency + good throughput
+`-XX:+UseZGC` 
 
-Heap divided into regions
+----------
 
-Collects garbage incrementally
+### 6. Shenandoah GC
 
-Predictable pause times
+**Best for:** Low pause time, Red Hat JVMs
 
-📌 Default GC from Java 9+
+-   Concurrent compaction
+    
+-   Very low latency
+    
 
--XX:+UseG1GC
+`-XX:+UseShenandoahGC`
 
-5. ZGC (Ultra-Low Latency)
+## Generational Garbage Collection
 
-Best for: Huge heaps, real-time systems
+Most collectors use **Generational GC** based on this idea:
 
-Pause times in milliseconds
+> Most objects die young
 
-Almost fully concurrent
 
-Very scalable
+# Heap Structure
 
-📌 Java 11+
+| Generation | Purpose |
+| --- | --- |
+| Young Gen | New objects |
+| Old Gen | Long-lived objects |
+| Metaspace | Class metadata |
+### Young Generation spaces:
 
--XX:+UseZGC
+-   **Eden**
+    
+-   **Survivor S0 / S1**
+    
+# Types of GC Events
 
-6. Shenandoah GC
+| GC Type | Description |
+|---------|--------------|
+| Minor GC | Cleans Young Gen |
+| Major GC | Cleans Old Gen |
+| Full GC | Cleans entire heap (slow!) |
 
-Best for: Low pause time, Red Hat JVMs
 
-Concurrent compaction
 
-Very low latency
-
-📌
-
--XX:+UseShenandoahGC
-
-Generational Garbage Collection
-
-Most collectors use Generational GC based on this idea:
-
-Most objects die young
-
-Heap Structure
-Generation	Purpose
-Young Gen	New objects
-Old Gen	Long-lived objects
-Metaspace	Class metadata
-Young Generation spaces:
-
-Eden
-
-Survivor S0 / S1
-
-Types of GC Events
-GC Type	Description
-Minor GC	Cleans Young Gen
-Major GC	Cleans Old Gen
-Full GC	Cleans entire heap (slow!)
-Can we request GC manually?
+## Can we request GC manually?
 
 Yes, but JVM may ignore it:
-
+```java
 System.gc();
+```
+
+Use **only for testing**, never in production.
 
 
-Use only for testing, never in production.
 
-Real-World Tip (Very Important)
+## Real-World Tip (Very Important)
 
 In production:
 
-Prefer G1GC (default)
+-   Prefer **G1GC** (default)
+    
+-   Monitor with:
+    
+    -   GC logs
+        
+    -   JConsole / VisualVM
+        
+-   Avoid:
+    
+    -   Creating too many short-lived objects
+        
+    -   Memory leaks via static references
 
-Monitor with:
+# Comparison Table
 
-GC logs
+| GC Type | Threads | Stop-the-World | Pause Time | Heap Size | Use Case | Status |
+|---------|---------|----------------|------------|-----------|----------|--------|
+| Serial GC | Single | Yes | High | Small | Small apps | Active |
+| Parallel GC | Multi | Yes | Medium | Medium–Large | Batch jobs | Active |
+| CMS GC | Multi | Partial | Low | Medium | Low latency (old) | ❌ Deprecated |
+| G1 GC | Multi | Partial | Low & predictable | Large | Enterprise apps | ✅ Default |
+| ZGC  | Multi  | Almost none    | Very Low (ms)    | Very Large    | Real-time systems    | Active |
+| Shenandoah GC        | Multi        | Almost none                | Very Low                | Large                | Low-latency apps                | Active |
+| Epsilon GC        | None        | N/A                | None                | Fixed                | Testing only                | Active |
 
-JConsole / VisualVM
-
-Avoid:
-
-Creating too many short-lived objects
-
-Memory leaks via static references
