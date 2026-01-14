@@ -202,3 +202,80 @@ In production:
 | Shenandoah GC        | Multi        | Almost none                | Very Low                | Large                | Low-latency apps                | Active |
 | Epsilon GC        | None        | N/A                | None                | Fixed                | Testing only                | Active |
 
+#  GC Usage Instructions
+
+## 1️⃣ Command Line (Most Basic)
+If you run your app using Java:
+```bash
+java -XX:+UseShenandoahGC -jar myapp.jar
+```
+That’s it. JVM will start with Shenandoah GC.
+
+## 2️⃣ Spring Boot Application
+### From command line
+```bash
+gjava -XX:+UseShenandoahGC -Xms2g -Xmx2g -jar app.jar
+```
+### Using environment variable
+- **Linux / Mac:**
+  ```bash
+  export JAVA_OPTS="-XX:+UseShenandoahGC"
+  java $JAVA_OPTS -jar app.jar
+  ```
+- **Windows:**
+  ```cmd
+  set JAVA_OPTS=-XX:+UseShenandoahGC
+  java %JAVA_OPTS% -jar app.jar
+  ```
+
+## 3️⃣ application.properties / application.yml
+> ❌ You cannot put this directly in:
+> `application.properties`
+> ❌ This will NOT work:
+> `-XX:+UseShenandoahGC`
+> JVM options must be applied before Spring starts.
+
+## 4️⃣ Docker (Very Common in Production)
+### Dockerfile ENTRYPOINT example:
+```dockerfile
+ENTRYPOINT ["java", "-XX:+UseShenandoahGC", "-jar", "app.jar"]
+```
+### Or using environment variable:
+```dockerfile
+env JAVA_OPTS="-XX:+UseShenandoahGC"
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+```
+
+## 5️⃣ Kubernetes / Helm
+environment variable:
+```yaml
+env:
+  - name: JAVA_OPTS
+    value: "-XX:+UseShenandoahGC"
+```
+or in container args:
+defined as:
+```yaml
+aargs:
+  - "-XX:+UseShenandoahGC"
+```
+
+## 6️⃣ IDE (IntelliJ / Eclipse)
+### IntelliJ IDEA:
+1. Run → Edit Configurations 
+2. Select your app
+3. VM Options
+4. Add:
+   ```
+   -XX:+UseShenandoahGC
+   ```
+
+## Eclipse
+
+1. Run Configurations → Arguments → VM arguments
+
+# 7️⃣ Systemd / Server Startup Script
+```bash
+JAVA_OPTS="-XX:+UseShenandoahGC"
+ExecStart=/usr/bin/java $JAVA_OPTS -jar app.jar
+```
