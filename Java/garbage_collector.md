@@ -37,7 +37,6 @@ GC checks **reachability**:
     
 -   JNI references
  
-----------
 
 ## Types of Garbage Collectors in Java
 
@@ -118,7 +117,7 @@ Default GC from Java 9+
 
 `-XX:+UseZGC` 
 
-----------
+
 
 ### 6. Shenandoah GC
 
